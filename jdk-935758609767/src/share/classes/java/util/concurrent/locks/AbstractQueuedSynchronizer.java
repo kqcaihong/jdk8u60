@@ -643,6 +643,7 @@ public abstract class AbstractQueuedSynchronizer
          */
         int ws = node.waitStatus;
         if (ws < 0)
+            // 没有失败重试，失败则表示其他线程更新成功
             compareAndSetWaitStatus(node, ws, 0);
 
         /*
@@ -652,13 +653,17 @@ public abstract class AbstractQueuedSynchronizer
          * non-cancelled successor.
          */
         Node s = node.next;
+        // waitStatus > 0即cancelled了
         if (s == null || s.waitStatus > 0) {
             s = null;
+            // 从tail开始，反向查找最后一个waitStatus<= 0的节点
+            // release是exclusive mode，只有一个线程，，所以不加锁、不CAS重试
             for (Node t = tail; t != null && t != node; t = t.prev)
                 if (t.waitStatus <= 0)
                     s = t;
         }
         if (s != null)
+            // 唤醒
             LockSupport.unpark(s.thread);
     }
 
@@ -684,6 +689,7 @@ public abstract class AbstractQueuedSynchronizer
             if (h != null && h != tail) {
                 int ws = h.waitStatus;
                 if (ws == Node.SIGNAL) {
+                    // 更新head的waitStatus，失败循环重试，成功在唤醒next节点
                     if (!compareAndSetWaitStatus(h, Node.SIGNAL, 0))
                         continue;            // loop to recheck cases
                     unparkSuccessor(h);
@@ -692,6 +698,9 @@ public abstract class AbstractQueuedSynchronizer
                          !compareAndSetWaitStatus(h, 0, Node.PROPAGATE))
                     continue;                // loop on failed CAS
             }
+            // h==null || h==tail，即队列中无等待线程，则结束
+            // 成功调用了unparkSuccessor，则结束
+            // 更新了head状态为PROPAGATE，则结束
             if (h == head)                   // loop if head changed
                 break;
         }
