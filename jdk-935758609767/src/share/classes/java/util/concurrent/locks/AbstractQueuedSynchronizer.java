@@ -996,6 +996,7 @@ public abstract class AbstractQueuedSynchronizer
                 if (p == head) {
                     int r = tryAcquireShared(arg);
                     if (r >= 0) {
+                        // 其中会调doReleaseShared
                         setHeadAndPropagate(node, r);
                         p.next = null; // help GC
                         failed = false;
@@ -1310,6 +1311,7 @@ public abstract class AbstractQueuedSynchronizer
         if (Thread.interrupted())
             throw new InterruptedException();
         if (tryAcquireShared(arg) < 0)
+            // 线程进入同步队列等待
             doAcquireSharedInterruptibly(arg);
     }
 
@@ -1348,6 +1350,7 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final boolean releaseShared(int arg) {
         if (tryReleaseShared(arg)) {
+            // 将唤醒队列中第一个阻塞的线程
             doReleaseShared();
             return true;
         }

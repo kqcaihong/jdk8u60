@@ -162,6 +162,7 @@ public class CountDownLatch {
         private static final long serialVersionUID = 4982264981922014374L;
 
         Sync(int count) {
+            // 设置同步状态
             setState(count);
         }
 
@@ -170,6 +171,7 @@ public class CountDownLatch {
         }
 
         protected int tryAcquireShared(int acquires) {
+            // 返回1时，将退出；返回-1时，将进入同步队列阻塞
             return (getState() == 0) ? 1 : -1;
         }
 
@@ -177,10 +179,12 @@ public class CountDownLatch {
             // Decrement count; signal when transition to zero
             for (;;) {
                 int c = getState();
+                // state已经为0时，返回false而结束
                 if (c == 0)
                     return false;
                 int nextc = c-1;
                 if (compareAndSetState(c, nextc))
+                    // 为true时，将唤醒同步队列中的阻塞线程
                     return nextc == 0;
             }
         }
