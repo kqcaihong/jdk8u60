@@ -1371,6 +1371,7 @@ public abstract class AbstractQueuedSynchronizer
      * @return {@code true} if there may be other threads waiting to acquire
      */
     public final boolean hasQueuedThreads() {
+      // 队列为空时，head、tail都是null，或都指向一个哑元
         return head != tail;
     }
 
@@ -1547,6 +1548,7 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final int getQueueLength() {
         int n = 0;
+        // 从后向前遍历同步队列，计数
         for (Node p = tail; p != null; p = p.prev) {
             if (p.thread != null)
                 ++n;

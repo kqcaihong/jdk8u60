@@ -187,10 +187,13 @@ public class Semaphore implements java.io.Serializable {
         protected final boolean tryReleaseShared(int releases) {
             for (;;) {
                 int current = getState();
+                // 归还
                 int next = current + releases;
+                // 判断int是否越界
                 if (next < current) // overflow
                     throw new Error("Maximum permit count exceeded");
                 if (compareAndSetState(current, next))
+                    // 将在AQS中唤醒队列中的后继节点
                     return true;
             }
         }
@@ -207,8 +210,10 @@ public class Semaphore implements java.io.Serializable {
         }
 
         final int drainPermits() {
+            // 死循环，直到成功或许可为空了
             for (;;) {
                 int current = getState();
+                // 还有许可，则获取当前所有的
                 if (current == 0 || compareAndSetState(current, 0))
                     return current;
             }
@@ -242,12 +247,15 @@ public class Semaphore implements java.io.Serializable {
 
         protected int tryAcquireShared(int acquires) {
             for (;;) {
+                // 队列中，当前线程之前有排队的其他线程
                 if (hasQueuedPredecessors())
+                    // 返回小于0，将尝试park当前线程
                     return -1;
                 int available = getState();
                 int remaining = available - acquires;
                 if (remaining < 0 ||
                     compareAndSetState(available, remaining))
+                    // 如果大于0，将继续唤醒后继线程
                     return remaining;
             }
         }
@@ -262,6 +270,7 @@ public class Semaphore implements java.io.Serializable {
      *        must occur before any acquires will be granted.
      */
     public Semaphore(int permits) {
+        // 默认非公平
         sync = new NonfairSync(permits);
     }
 
@@ -617,6 +626,7 @@ public class Semaphore implements java.io.Serializable {
      * @return the number of permits available in this semaphore
      */
     public int availablePermits() {
+        // 返回当前可用的许可数
         return sync.getPermits();
     }
 
@@ -626,6 +636,7 @@ public class Semaphore implements java.io.Serializable {
      * @return the number of permits acquired
      */
     public int drainPermits() {
+        // 一次性获取当前所有可用许可
         return sync.drainPermits();
     }
 
