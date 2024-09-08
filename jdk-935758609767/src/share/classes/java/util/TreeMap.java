@@ -118,8 +118,10 @@ public class TreeMap<K,V>
      *
      * @serial
      */
+    // 用于维护顺序，如果使用key的自然排序，则它为null
     private final Comparator<? super K> comparator;
 
+    // 树的根节点
     private transient Entry<K,V> root;
 
     /**
@@ -342,10 +344,12 @@ public class TreeMap<K,V>
     final Entry<K,V> getEntry(Object key) {
         // Offload comparator-based version for sake of performance
         if (comparator != null)
+            // 基于comparator来查找，当compare()返回0时，就认为找到了
             return getEntryUsingComparator(key);
         if (key == null)
             throw new NullPointerException();
         @SuppressWarnings("unchecked")
+            // 用key的自然顺序查找
             Comparable<? super K> k = (Comparable<? super K>) key;
         Entry<K,V> p = root;
         while (p != null) {
@@ -355,6 +359,7 @@ public class TreeMap<K,V>
             else if (cmp > 0)
                 p = p.right;
             else
+                // compareTo返回0，就认为找到了
                 return p;
         }
         return null;
