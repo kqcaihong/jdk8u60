@@ -46,11 +46,13 @@ public class ReferenceQueue<T> {
         }
     }
 
+    // 只是两个标识：NULL即还未入队，ENQUEUED即已入队
     static ReferenceQueue<Object> NULL = new Null<>();
     static ReferenceQueue<Object> ENQUEUED = new Null<>();
 
     static private class Lock { };
     private Lock lock = new Lock();
+    // 最后一个元素
     private volatile Reference<? extends T> head = null;
     private long queueLength = 0;
 
@@ -63,8 +65,10 @@ public class ReferenceQueue<T> {
                 return false;
             }
             assert queue == this;
+            // 标记为已入队
             r.queue = ENQUEUED;
             r.next = (head == null) ? r : head;
+            // 将head设置为当前Reference
             head = r;
             queueLength++;
             if (r instanceof FinalReference) {
@@ -79,10 +83,13 @@ public class ReferenceQueue<T> {
     private Reference<? extends T> reallyPoll() {       /* Must hold lock */
         Reference<? extends T> r = head;
         if (r != null) {
+            // r.next == r即队列中只有r一个元素
             head = (r.next == r) ?
                 null :
                 r.next; // Unchecked due to the next field having a raw type in Reference
+            // 标记为已出队
             r.queue = NULL;
+            // next节点指向自己
             r.next = r;
             queueLength--;
             if (r instanceof FinalReference) {

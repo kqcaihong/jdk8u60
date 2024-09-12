@@ -89,6 +89,7 @@ public abstract class Reference<T> {
 
     private T referent;         /* Treated specially by GC */
 
+    // 只记录了head节点
     volatile ReferenceQueue<? super T> queue;
 
     /* When active:   NULL
@@ -152,6 +153,7 @@ public abstract class Reference<T> {
                         //
                         // This may lead to the VM not ever trying to load the InterruptedException
                         // class again.
+                        // 阻塞等待下一个要入队的引用
                         try {
                             try {
                                 lock.wait();
@@ -167,6 +169,7 @@ public abstract class Reference<T> {
                     continue;
                 }
 
+                // 入队
                 ReferenceQueue<Object> q = r.queue;
                 if (q != ReferenceQueue.NULL) q.enqueue(r);
             }
