@@ -83,7 +83,7 @@ public class ReferenceQueue<T> {
     private Reference<? extends T> reallyPoll() {       /* Must hold lock */
         Reference<? extends T> r = head;
         if (r != null) {
-            // r.next == r即队列中只有r一个元素
+            // r.next == r即队列中只有r一个元素，此时将head指向null
             head = (r.next == r) ?
                 null :
                 r.next; // Unchecked due to the next field having a raw type in Reference
@@ -109,6 +109,7 @@ public class ReferenceQueue<T> {
      *          otherwise <code>null</code>
      */
     public Reference<? extends T> poll() {
+        // 无元素
         if (head == null)
             return null;
         synchronized (lock) {
@@ -145,6 +146,7 @@ public class ReferenceQueue<T> {
         synchronized (lock) {
             Reference<? extends T> r = reallyPoll();
             if (r != null) return r;
+            // 队列中无引用，阻塞
             long start = (timeout == 0) ? 0 : System.nanoTime();
             for (;;) {
                 lock.wait(timeout);

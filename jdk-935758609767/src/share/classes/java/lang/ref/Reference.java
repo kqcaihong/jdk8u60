@@ -134,6 +134,7 @@ public abstract class Reference<T> {
         public void run() {
             for (;;) {
                 Reference<Object> r;
+                // 防止并发
                 synchronized (lock) {
                     if (pending != null) {
                         r = pending;
