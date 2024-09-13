@@ -177,6 +177,7 @@ public class WeakHashMap<K,V>
     /**
      * Reference queue for cleared WeakEntries
      */
+    // 被gc回收的弱引用key，对应的entry将放入queue中
     private final ReferenceQueue<Object> queue = new ReferenceQueue<>();
 
     /**
@@ -238,6 +239,7 @@ public class WeakHashMap<K,V>
      * capacity (16) and load factor (0.75).
      */
     public WeakHashMap() {
+        // 即this(16, 0.75)
         this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
     }
 
@@ -397,6 +399,7 @@ public class WeakHashMap<K,V>
         Entry<K,V>[] tab = getTable();
         int index = indexFor(h, tab.length);
         Entry<K,V> e = tab[index];
+        // 顺着链表查找
         while (e != null) {
             if (e.hash == h && eq(k, e.get()))
                 return e.value;
@@ -445,11 +448,14 @@ public class WeakHashMap<K,V>
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
     public V put(K key, V value) {
+        // key==null时，使用常量Object NULL_KEY
         Object k = maskNull(key);
         int h = hash(k);
         Entry<K,V>[] tab = getTable();
+        // 散列
         int i = indexFor(h, tab.length);
 
+        // 遍历链表，如果key已存在，就覆盖旧值
         for (Entry<K,V> e = tab[i]; e != null; e = e.next) {
             if (h == e.hash && eq(k, e.get())) {
                 V oldValue = e.value;
@@ -459,9 +465,11 @@ public class WeakHashMap<K,V>
             }
         }
 
+        // 首次put该key，加到链表头部
         modCount++;
         Entry<K,V> e = tab[i];
         tab[i] = new Entry<>(k, value, queue, h, e);
+        // 先put，后扩容
         if (++size >= threshold)
             resize(tab.length * 2);
         return null;
@@ -508,7 +516,7 @@ public class WeakHashMap<K,V>
     }
 
     /** Transfers all entries from src to dest tables */
-    private void transfer(Entry<K,V>[] src, Entry<K,V>[] dest) {
+    private void  transfer(Entry<K,V>[] src, Entry<K,V>[] dest) {
         for (int j = 0; j < src.length; ++j) {
             Entry<K,V> e = src[j];
             src[j] = null;
@@ -594,11 +602,14 @@ public class WeakHashMap<K,V>
         Entry<K,V> prev = tab[i];
         Entry<K,V> e = prev;
 
+        // 从单链表中移除该entry
         while (e != null) {
             Entry<K,V> next = e.next;
+            // 找到了key的entry项
             if (h == e.hash && eq(k, e.get())) {
                 modCount++;
                 size--;
+                // remove的entry在链表头
                 if (prev == e)
                     tab[i] = next;
                 else
@@ -696,12 +707,15 @@ public class WeakHashMap<K,V>
     }
 
     /**
-     * The entries in this hash table extend WeakReference, using its main ref
+     * Th eentries in this hash table extend WeakReference, using its main ref
      * field as the key.
      */
+    // 键是key的弱引用
     private static class Entry<K,V> extends WeakReference<Object> implements Map.Entry<K,V> {
         V value;
+        // 首次计算后缓存起来
         final int hash;
+        // 单链表
         Entry<K,V> next;
 
         /**
