@@ -167,6 +167,7 @@ public class ThreadLocal<T> {
                 return result;
             }
         }
+        // 初始化map或value
         return setInitialValue();
     }
 
@@ -273,6 +274,7 @@ public class ThreadLocal<T> {
      */
     static final class SuppliedThreadLocal<T> extends ThreadLocal<T> {
 
+        // 提供默认值
         private final Supplier<? extends T> supplier;
 
         SuppliedThreadLocal(Supplier<? extends T> supplier) {
@@ -496,6 +498,7 @@ public class ThreadLocal<T> {
                  e = tab[i = nextIndex(i, len)]) {
                 if (e.get() == key) {
                     e.clear();
+                    // 删除失效项
                     expungeStaleEntry(i);
                     return;
                 }
