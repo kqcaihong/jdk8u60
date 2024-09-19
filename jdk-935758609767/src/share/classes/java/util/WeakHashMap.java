@@ -317,6 +317,7 @@ public class WeakHashMap<K,V>
      * Expunges stale entries from the table.
      */
     private void expungeStaleEntries() {
+        // 遍历queue，poll()不带阻塞
         for (Object x; (x = queue.poll()) != null; ) {
             synchronized (queue) {
                 @SuppressWarnings("unchecked")
@@ -325,6 +326,7 @@ public class WeakHashMap<K,V>
 
                 Entry<K,V> prev = table[i];
                 Entry<K,V> p = prev;
+                // 从链表中删除某一项
                 while (p != null) {
                     Entry<K,V> next = p.next;
                     if (p == e) {
