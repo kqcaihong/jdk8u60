@@ -93,9 +93,11 @@ public class CopyOnWriteArrayList<E>
     private static final long serialVersionUID = 8673264195747942595L;
 
     /** The lock protecting all mutators */
+    // 修改操作加锁
     final transient ReentrantLock lock = new ReentrantLock();
 
     /** The array, accessed only via getArray/setArray. */
+    // 底层数据，应当只通过getArray/setArray访问
     private transient volatile Object[] array;
 
     /**
@@ -117,6 +119,7 @@ public class CopyOnWriteArrayList<E>
      * Creates an empty list.
      */
     public CopyOnWriteArrayList() {
+        // 初始容量为0
         setArray(new Object[0]);
     }
 
@@ -297,6 +300,7 @@ public class CopyOnWriteArrayList<E>
      *
      * @return a clone of this list
      */
+    // 浅拷贝
     public Object clone() {
         try {
             @SuppressWarnings("unchecked")
@@ -323,6 +327,7 @@ public class CopyOnWriteArrayList<E>
      *
      * @return an array containing all the elements in this list
      */
+    // 返回新数组
     public Object[] toArray() {
         Object[] elements = getArray();
         return Arrays.copyOf(elements, elements.length);
@@ -393,6 +398,7 @@ public class CopyOnWriteArrayList<E>
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public E get(int index) {
+        // 返回array[index]
         return get(getArray(), index);
     }
 
@@ -409,6 +415,7 @@ public class CopyOnWriteArrayList<E>
             Object[] elements = getArray();
             E oldValue = get(elements, index);
 
+            // 确实更新元素
             if (oldValue != element) {
                 int len = elements.length;
                 Object[] newElements = Arrays.copyOf(elements, len);
@@ -416,6 +423,7 @@ public class CopyOnWriteArrayList<E>
                 setArray(newElements);
             } else {
                 // Not quite a no-op; ensures volatile write semantics
+                // 其实没做修改
                 setArray(elements);
             }
             return oldValue;
@@ -436,8 +444,10 @@ public class CopyOnWriteArrayList<E>
         try {
             Object[] elements = getArray();
             int len = elements.length;
+            // copy
             Object[] newElements = Arrays.copyOf(elements, len + 1);
             newElements[len] = e;
+            // 更新array引用
             setArray(newElements);
             return true;
         } finally {
@@ -485,17 +495,23 @@ public class CopyOnWriteArrayList<E>
      *
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
+    // 移除此列表中指定位置的元素
+    // 将所有后续元素向左移动(从它们的索引中减去1)。
+    // 返回从列表中删除的元素。
     public E remove(int index) {
         final ReentrantLock lock = this.lock;
+        // 不可并发
         lock.lock();
         try {
             Object[] elements = getArray();
             int len = elements.length;
             E oldValue = get(elements, index);
             int numMoved = len - index - 1;
+            // 若删除的是最后一个元素
             if (numMoved == 0)
                 setArray(Arrays.copyOf(elements, len - 1));
             else {
+                // 分别Copy 待删除index的左边、右边元素
                 Object[] newElements = new Object[len - 1];
                 System.arraycopy(elements, 0, newElements, 0, index);
                 System.arraycopy(elements, index + 1, newElements, index,
@@ -795,6 +811,7 @@ public class CopyOnWriteArrayList<E>
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
+            // 更新array引用为空数组
             setArray(new Object[0]);
         } finally {
             lock.unlock();
@@ -1128,8 +1145,10 @@ public class CopyOnWriteArrayList<E>
 
     static final class COWIterator<E> implements ListIterator<E> {
         /** Snapshot of the array */
+        // 快照
         private final Object[] snapshot;
         /** Index of element to be returned by subsequent call to next.  */
+        // 游标
         private int cursor;
 
         private COWIterator(Object[] elements, int initialCursor) {
