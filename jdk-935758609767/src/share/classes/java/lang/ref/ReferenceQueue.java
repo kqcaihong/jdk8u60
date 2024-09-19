@@ -61,19 +61,22 @@ public class ReferenceQueue<T> {
             // Check that since getting the lock this reference hasn't already been
             // enqueued (and even then removed)
             ReferenceQueue<?> queue = r.queue;
+            // 不入队或已入队，返回false
             if ((queue == NULL) || (queue == ENQUEUED)) {
                 return false;
             }
             assert queue == this;
-            // 标记为已入队
+            // 标记该ref为已入队
             r.queue = ENQUEUED;
+            // 将该ref挂到队尾
             r.next = (head == null) ? r : head;
-            // 将head设置为当前Reference
+            // head指向队尾
             head = r;
             queueLength++;
             if (r instanceof FinalReference) {
                 sun.misc.VM.addFinalRefCount(1);
             }
+            // 唤醒remove()
             lock.notifyAll();
             return true;
         }
