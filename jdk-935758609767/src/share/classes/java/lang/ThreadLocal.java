@@ -158,8 +158,10 @@ public class ThreadLocal<T> {
      */
     public T get() {
         Thread t = Thread.currentThread();
+        // 当前线程的ThreadLocalMap
         ThreadLocalMap map = getMap(t);
         if (map != null) {
+            // key即当前threadLocal实例
             ThreadLocalMap.Entry e = map.getEntry(this);
             if (e != null) {
                 @SuppressWarnings("unchecked")
@@ -167,7 +169,7 @@ public class ThreadLocal<T> {
                 return result;
             }
         }
-        // 初始化map或value
+        // map为null，或者entry为null时，初始化map或entry
         return setInitialValue();
     }
 
@@ -178,12 +180,16 @@ public class ThreadLocal<T> {
      * @return the initial value
      */
     private T setInitialValue() {
+        // 生成初始值
         T value = initialValue();
         Thread t = Thread.currentThread();
+        // Thread类的threadLocals默认为null
         ThreadLocalMap map = getMap(t);
         if (map != null)
+            // key是当前threadLocal对象
             map.set(this, value);
         else
+            // 初始化map，并put第一个entry
             createMap(t, value);
         return value;
     }
@@ -203,6 +209,7 @@ public class ThreadLocal<T> {
         if (map != null)
             map.set(this, value);
         else
+            // 初始化线程的ThreadLocalMap
             createMap(t, value);
     }
 
@@ -274,7 +281,6 @@ public class ThreadLocal<T> {
      */
     static final class SuppliedThreadLocal<T> extends ThreadLocal<T> {
 
-        // 提供默认值
         private final Supplier<? extends T> supplier;
 
         SuppliedThreadLocal(Supplier<? extends T> supplier) {
@@ -307,11 +313,13 @@ public class ThreadLocal<T> {
          * entry can be expunged from table.  Such entries are referred to
          * as "stale entries" in the code that follows.
          */
+        // 不是链表，通过线性探测解决hash冲突
         static class Entry extends WeakReference<ThreadLocal<?>> {
             /** The value associated with this ThreadLocal. */
             Object value;
 
             Entry(ThreadLocal<?> k, Object v) {
+                // 即threadLocal的弱引用
                 super(k);
                 value = v;
             }
@@ -342,6 +350,7 @@ public class ThreadLocal<T> {
          * Set the resize threshold to maintain at worst a 2/3 load factor.
          */
         private void setThreshold(int len) {
+            // len即哈希表的长度
             threshold = len * 2 / 3;
         }
 
@@ -367,6 +376,7 @@ public class ThreadLocal<T> {
         ThreadLocalMap(ThreadLocal<?> firstKey, Object firstValue) {
             table = new Entry[INITIAL_CAPACITY];
             int i = firstKey.threadLocalHashCode & (INITIAL_CAPACITY - 1);
+            // 放入entry，key就是threadLocal的弱引用
             table[i] = new Entry(firstKey, firstValue);
             size = 1;
             setThreshold(INITIAL_CAPACITY);
@@ -436,9 +446,11 @@ public class ThreadLocal<T> {
 
             while (e != null) {
                 ThreadLocal<?> k = e.get();
+                // 弱引用有效
                 if (k == key)
                     return e;
                 if (k == null)
+                    // threadLocal已被回收
                     expungeStaleEntry(i);
                 else
                     i = nextIndex(i, len);
@@ -464,25 +476,29 @@ public class ThreadLocal<T> {
             int len = tab.length;
             int i = key.threadLocalHashCode & (len-1);
 
+            // 找到一个空位时结束循环
             for (Entry e = tab[i];
                  e != null;
                  e = tab[i = nextIndex(i, len)]) {
                 ThreadLocal<?> k = e.get();
-
+                // key有效，覆盖旧值
                 if (k == key) {
                     e.value = value;
                     return;
                 }
-
+                // key已失效则替换
                 if (k == null) {
                     replaceStaleEntry(key, value, i);
                     return;
                 }
             }
 
+            // put
             tab[i] = new Entry(key, value);
             int sz = ++size;
+            // 扫描哈希表，移除过时条目
             if (!cleanSomeSlots(i, sz) && sz >= threshold)
+                // rehash，可能触发扩容
                 rehash();
         }
 
@@ -498,7 +514,7 @@ public class ThreadLocal<T> {
                  e = tab[i = nextIndex(i, len)]) {
                 if (e.get() == key) {
                     e.clear();
-                    // 删除失效项
+                    // 删除失效的
                     expungeStaleEntry(i);
                     return;
                 }
@@ -594,7 +610,9 @@ public class ThreadLocal<T> {
             int len = tab.length;
 
             // expunge entry at staleSlot
+            // 释放对value引用
             tab[staleSlot].value = null;
+            // 释放entry
             tab[staleSlot] = null;
             size--;
 
@@ -671,6 +689,7 @@ public class ThreadLocal<T> {
          * shrink the size of the table, double the table size.
          */
         private void rehash() {
+            // 删除失效的
             expungeStaleEntries();
 
             // Use lower threshold for doubling to avoid hysteresis
@@ -684,6 +703,7 @@ public class ThreadLocal<T> {
         private void resize() {
             Entry[] oldTab = table;
             int oldLen = oldTab.length;
+            // 两倍扩容
             int newLen = oldLen * 2;
             Entry[] newTab = new Entry[newLen];
             int count = 0;
