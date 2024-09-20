@@ -288,6 +288,7 @@ public class Hashtable<K,V>
      *             <code>false</code> otherwise.
      * @exception  NullPointerException  if the value is <code>null</code>
      */
+    // 访问操作也加锁
     public synchronized boolean contains(Object value) {
         if (value == null) {
             throw new NullPointerException();
@@ -358,6 +359,7 @@ public class Hashtable<K,V>
      * @see     #put(Object, Object)
      */
     @SuppressWarnings("unchecked")
+    // 访问操作也加对象锁
     public synchronized V get(Object key) {
         Entry<?,?> tab[] = table;
         int hash = key.hashCode();
