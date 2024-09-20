@@ -449,6 +449,7 @@ public class WeakHashMap<K,V>
      *         (A <tt>null</tt> return can also indicate that the map
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
+    // 单链表解决哈希冲突，头插法
     public V put(K key, V value) {
         // key==null时，使用常量Object NULL_KEY
         Object k = maskNull(key);

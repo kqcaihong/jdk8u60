@@ -465,6 +465,7 @@ public class ThreadLocal<T> {
          * @param key the thread local object
          * @param value the value to be set
          */
+        // 线性探测解决哈希冲突
         private void set(ThreadLocal<?> key, Object value) {
 
             // We don't use a fast path as with get() because it is at

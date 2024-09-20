@@ -32,7 +32,7 @@ package java.lang.ref;
  * @author   Mark Reinhold
  * @since    1.2
  */
-
+ // 引用队列，在检测到适当的可达性更改后，垃圾收集器将已注册的引用对象追加到该队列。
 public class ReferenceQueue<T> {
 
     /**
@@ -52,7 +52,7 @@ public class ReferenceQueue<T> {
 
     static private class Lock { };
     private Lock lock = new Lock();
-    // 最后一个元素
+    // 头节点
     private volatile Reference<? extends T> head = null;
     private long queueLength = 0;
 
@@ -68,9 +68,8 @@ public class ReferenceQueue<T> {
             assert queue == this;
             // 标记该ref为已入队
             r.queue = ENQUEUED;
-            // 将该ref挂到队尾
+            // 头插法
             r.next = (head == null) ? r : head;
-            // head指向队尾
             head = r;
             queueLength++;
             if (r instanceof FinalReference) {

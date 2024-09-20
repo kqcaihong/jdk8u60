@@ -620,6 +620,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         final int hash;
         final K key;
         volatile V val;
+        // 单链表
         volatile Node<K,V> next;
 
         Node(int hash, K key, V val, Node<K,V> next) {
@@ -749,7 +750,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * full volatile semantics, but are currently coded as volatile
      * writes to be conservative.
      */
-
+    // 在调整大小时，Volatile访问方法用于表元素以及正在进行的下一个表的元素。
     @SuppressWarnings("unchecked")
     static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
         return (Node<K,V>)U.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
@@ -807,6 +808,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * Table of counter cells. When non-null, size is a power of 2.
      */
+    // 分桶计数
     private transient volatile CounterCell[] counterCells;
 
     // views
@@ -1002,6 +1004,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *         {@code null} if there was no mapping for {@code key}
      * @throws NullPointerException if the specified key or value is null
      */
+    // ke或value时抛出NullPointerException
     public V put(K key, V value) {
         return putVal(key, value, false);
     }
@@ -1014,15 +1017,20 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
             if (tab == null || (n = tab.length) == 0)
+                // 初始化hash表
                 tab = initTable();
+            // index位空闲，即没有哈希冲突
             else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+                // cas成功则跳出循环
                 if (casTabAt(tab, i, null,
                              new Node<K,V>(hash, key, value, null)))
                     break;                   // no lock when adding to empty bin
             }
+            // 正在扩容中
             else if ((fh = f.hash) == MOVED)
                 tab = helpTransfer(tab, f);
             else {
+                // 哈希冲突时，只对当前桶加锁，新entry添加到链表尾部
                 V oldVal = null;
                 synchronized (f) {
                     if (tabAt(tab, i) == f) {
@@ -1030,6 +1038,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                             binCount = 1;
                             for (Node<K,V> e = f;; ++binCount) {
                                 K ek;
+                                // hash相等且key相等
                                 if (e.hash == hash &&
                                     ((ek = e.key) == key ||
                                      (ek != null && key.equals(ek)))) {
@@ -1040,6 +1049,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                 }
                                 Node<K,V> pred = e;
                                 if ((e = e.next) == null) {
+                                    // 尾插法
                                     pred.next = new Node<K,V>(hash, key,
                                                               value, null);
                                     break;
@@ -1059,6 +1069,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                     }
                 }
                 if (binCount != 0) {
+                    // 链表元素>=8时，链表树化
                     if (binCount >= TREEIFY_THRESHOLD)
                         treeifyBin(tab, i);
                     if (oldVal != null)
@@ -2503,6 +2514,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * A padded cell for distributing counts.  Adapted from LongAdder
      * and Striped64.  See their internal docs for explanation.
      */
+    // 改编自LongAdder和Striped64
+        // 哈希桶中元素计数
     @sun.misc.Contended static final class CounterCell {
         volatile long value;
         CounterCell(long x) { value = x; }
@@ -2614,6 +2627,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             if ((n = tab.length) < MIN_TREEIFY_CAPACITY)
                 tryPresize(n << 1);
             else if ((b = tabAt(tab, index)) != null && b.hash >= 0) {
+                // 以链头为锁
                 synchronized (b) {
                     if (tabAt(tab, index) == b) {
                         TreeNode<K,V> hd = null, tl = null;
@@ -2660,6 +2674,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         TreeNode<K,V> left;
         TreeNode<K,V> right;
         TreeNode<K,V> prev;    // needed to unlink next upon deletion
+        // 红黑树，以node的hash值排序
         boolean red;
 
         TreeNode(int hash, K key, V val, Node<K,V> next,

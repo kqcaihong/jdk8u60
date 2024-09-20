@@ -98,6 +98,7 @@ public abstract class Reference<T> {
      *    Inactive:   this
      */
     @SuppressWarnings("rawtypes")
+    // 单链表
     Reference next;
 
     /* When active:   next element in a discovered reference list maintained by GC (or this if last)
