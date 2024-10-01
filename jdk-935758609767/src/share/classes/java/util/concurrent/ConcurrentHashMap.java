@@ -686,6 +686,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         return (h ^ (h >>> 16)) & HASH_BITS;
     }
 
+// 返回给定所需容量的表大小的2次幂
     /**
      * Returns a power of two table size for the given desired capacity.
      * See Hackers Delight, sec 3.2
