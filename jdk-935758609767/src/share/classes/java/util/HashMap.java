@@ -638,7 +638,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             else {
                 for (int binCount = 0; ; ++binCount) {
                     if ((e = p.next) == null) {
-                        // 添加到尾部
+                        // 新entry添加到尾部
                         p.next = newNode(hash, key, value, null);
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
                             treeifyBin(tab, hash);
@@ -650,6 +650,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                     p = e;
                 }
             }
+            // 存在相同的key，覆盖旧value
             if (e != null) { // existing mapping for key
                 V oldValue = e.value;
                 if (!onlyIfAbsent || oldValue == null)
@@ -713,6 +714,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                     else if (e instanceof TreeNode)
                         ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
                     else { // preserve order
+                        // 当前桶可能会分裂为两个桶，下标分别是j/j+oldCap
                         Node<K,V> loHead = null, loTail = null;
                         Node<K,V> hiHead = null, hiTail = null;
                         Node<K,V> next;
@@ -722,6 +724,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                 if (loTail == null)
                                     loHead = e;
                                 else
+                                    // 尾插法
                                     loTail.next = e;
                                 loTail = e;
                             }
