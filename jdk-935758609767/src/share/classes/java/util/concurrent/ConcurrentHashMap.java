@@ -784,6 +784,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * but also as a fallback during table initialization
      * races. Updated via CAS.
      */
+    // 基本计数，主要在没有争用时使用，经CAS更新。
     private transient volatile long baseCount;
 
     /**
@@ -809,7 +810,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * Table of counter cells. When non-null, size is a power of 2.
      */
-    // 分桶计数
+    // 计数器数组，长度是2的N次方
     private transient volatile CounterCell[] counterCells;
 
     // views
@@ -910,6 +911,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * {@inheritDoc}
      */
     public int size() {
+        // 计数
         long n = sumCount();
         return ((n < 0L) ? 0 :
                 (n > (long)Integer.MAX_VALUE) ? Integer.MAX_VALUE :
@@ -2517,18 +2519,19 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * A padded cell for distributing counts.  Adapted from LongAdder
      * and Striped64.  See their internal docs for explanation.
      */
-    // 改编自LongAdder和Striped64
-        // 哈希桶中元素计数
+    // 改编自LongAdder和Striped64，Contended用于消除缓存的伪共享
+    // 哈希桶中元素计数
     @sun.misc.Contended static final class CounterCell {
         volatile long value;
         CounterCell(long x) { value = x; }
     }
 
-    //
+    // baseCount + 所有CounterCell.value
     final long sumCount() {
         CounterCell[] as = counterCells; CounterCell a;
         long sum = baseCount;
         if (as != null) {
+            // 累加所有计数器
             for (int i = 0; i < as.length; ++i) {
                 if ((a = as[i]) != null)
                     sum += a.value;
