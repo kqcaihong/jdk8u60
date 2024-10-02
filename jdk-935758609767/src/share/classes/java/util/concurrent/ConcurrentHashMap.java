@@ -2272,8 +2272,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             CounterCell a; long v; int m;
             boolean uncontended = true;
             if (as == null || (m = as.length - 1) < 0 ||
+                // 随机取一个CounterCell
                 (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
                 !(uncontended =
+                    // CAS更新CounterCell
                   U.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {
                 fullAddCount(x, uncontended);
                 return;
@@ -2522,6 +2524,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         CounterCell(long x) { value = x; }
     }
 
+    //
     final long sumCount() {
         CounterCell[] as = counterCells; CounterCell a;
         long sum = baseCount;
